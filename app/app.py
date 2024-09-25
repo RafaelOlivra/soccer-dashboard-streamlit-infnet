@@ -63,7 +63,7 @@ def set_data(data):
 
 
 def get_available_views():
-    return ["Upload dos Dados", "Explorar", "Customizar", "Sobre"]
+    return ["Explorar", "Sobre"]
 
 
 def get_current_view():
@@ -139,7 +139,7 @@ def view_explore():
 ### ABOUT ###
 def view_about():
     st.title("✨ Sobre")
-    st.write("""...""")
+    st.write("""Este é um dashboard criado para explorar dados de futebol.""")
     st.write("### Fonte dos Dados")
     st.write(
         """Os dados utilizados nessa foram disponibilizados pela biblioteca StatsBomb: https://github.com/statsbomb/statsbombpy"""
@@ -152,8 +152,8 @@ def view_about():
 
 ##############  DASHBOARD ##############
 def get_sidebar(view_index=0):
-    st.sidebar.title("🧳Chegada de turistas pelo Município do Rio de Janeiro")
-    st.sidebar.write("Selecione uma opção para visualizar os dados.")
+    st.sidebar.title("⚽ Dashboard StatsBombPy")
+    st.sidebar.write("Selecione uma visualização para explorar os dados.")
     current_view = st.sidebar.radio("Menu", get_available_views(), index=view_index)
     set_current_view(current_view)
 
