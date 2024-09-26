@@ -495,7 +495,7 @@ def plot_event_map(match_events_df, team_name="", event_type="Pass", color="blue
             st.pyplot(fig)
         except Exception as e:
             st.warning(
-                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados."
             )
         return True
 
@@ -586,7 +586,7 @@ def plot_events_heatmap(
 
         except Exception as e:
             st.warning(
-                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados."
             )
             st.exception(e)
         return True
@@ -642,7 +642,7 @@ def plot_bar_chart_events_by_player(
             st.plotly_chart(fig)
         except Exception as e:
             st.warning(
-                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados."
             )
         return True
 
@@ -683,7 +683,7 @@ def plot_area_graph_events_by_team(
             st.plotly_chart(fig)
         except Exception as e:
             st.warning(
-                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados."
             )
         return True
 
