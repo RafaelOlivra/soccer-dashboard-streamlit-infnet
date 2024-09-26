@@ -647,6 +647,7 @@ def plot_area_graph_events_by_team(
     match_events_df,
     event_type="Pass",
     event_name="Passes",
+    team_column_name="Time",
 ):
     with st.spinner("Carregando..."):
         try:
@@ -658,12 +659,17 @@ def plot_area_graph_events_by_team(
                 events.groupby(["minute", "team"]).size().reset_index(name="count")
             )
 
+            # Rename the team column
+            events_by_minute = events_by_minute.rename(
+                columns={"team": team_column_name}
+            )
+
             # Create an area graph, using 'team' for color differentiation
             fig = px.area(
                 events_by_minute,
                 x="minute",
                 y="count",
-                color="team",  # This will color the areas by team
+                color=team_column_name,
                 title=f"{event_name} por Minuto",
                 labels={"count": f"{event_name}", "minute": "Minuto"},
             )
