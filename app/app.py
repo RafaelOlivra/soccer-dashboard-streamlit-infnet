@@ -247,6 +247,17 @@ def get_vs_column_cfg():
     return [5, 2, 5]
 
 
+def get_percentage_comparison_by_event(match_events_df, match_events_df2):
+    events = len(match_events_df)
+    events2 = len(match_events_df2)
+
+    print(events, events2)
+
+    if events2 == 0:
+        return "N/A"
+    return f"{(events / events2) * 100:.0f}% do total"
+
+
 # --------------------------
 # STATSBOMB DATA SELECTORS
 # ---------------------------
@@ -591,7 +602,6 @@ def plot_bar_chart_events_by_player(
     event_type="Pass",
     orientation="h",
     event_name="Passes",
-    bar_color="blue",
 ):
     with st.spinner("Carregando..."):
         try:
@@ -608,14 +618,27 @@ def plot_bar_chart_events_by_player(
             # Sort the players by the number of events
             events_by_player = events_by_player.sort_values(by="count", ascending=False)
 
+            # Define the x and y columns
+            x, y = "player", "count"
+
+            # If orientation is vertical, sort the players in descending order
+            if orientation == "v":
+                events_by_player = events_by_player.sort_values(
+                    by="count", ascending=True
+                )
+            # If orientation is horizontal, set the x and y columns accordingly
+            else:
+                y, x = "player", "count"
+
             # Create a bar chart
             fig = px.bar(
                 events_by_player,
-                x="count",
-                y="player",
+                x=x,
+                y=y,
                 orientation=orientation,
-                title=f"Total de {event_name} por Jogador - {team_name}",
-                labels={"count": f"Total de {event_name}", "player": "Jogador"},
+                title=f"{event_name} por Jogador - {team_name}",
+                labels={"count": f"{event_name}", "player": "Jogador"},
+                color=x,
             )
 
             # Display the plot
@@ -647,8 +670,8 @@ def plot_area_graph_events_by_team(
                 x="minute",
                 y="count",
                 color="team",  # This will color the areas by team
-                title=f"Total de {event_name} por Minuto",
-                labels={"count": f"Total de {event_name}", "minute": "Minuto"},
+                title=f"{event_name} por Minuto",
+                labels={"count": f"{event_name}", "minute": "Minuto"},
             )
 
             # Display the plot
@@ -681,12 +704,10 @@ def view_explore():
     if current_explore_view == "Análise da Partida":
         st.write(f"---")
 
+        #  ---- Match summary
         score_obj = generate_match_score_dict(competition_id, season_id, match_id)
         home_team = score_obj["home_team_name"]
         alway_team = score_obj["alway_team_name"]
-
-        #  ---- Match summary
-        # Match score
         display_match_score(score_obj)
         st.write(f"---")
 
@@ -694,8 +715,11 @@ def view_explore():
         display_overall_match_stats(match_events_df, home_team, alway_team)
         st.write(f"---")
 
+        # Save a copy of the unfiltered DataFrame
+        original_match_events_df = match_events_df.copy()
+
         #  ---- Filters
-        with st.expander("⚙️ Filtrar"):
+        with st.expander("⚙️ Filtrar", expanded=True):
             # Time filter
             time_filter = st.slider(
                 "Filtrar por Minuto", min_value=0, max_value=120, value=(0, 120)
@@ -732,15 +756,38 @@ def view_explore():
         col1, col2, col3, col4 = st.columns(4)
 
         col1.metric(
-            "Total de Chutes", len(match_events_df[match_events_df["type"] == "Shot"])
+            "Chutes",
+            len(match_events_df[match_events_df["type"] == "Shot"]),
+            delta=get_percentage_comparison_by_event(
+                match_events_df[match_events_df["type"] == "Shot"],
+                original_match_events_df[original_match_events_df["type"] == "Shot"],
+            ),
         )
-        col2.metric("Chutes ao Gol", len(get_shots_on_goal_df(match_events_df)))
+        col2.metric(
+            "Chutes ao Gol",
+            len(get_shots_on_goal_df(match_events_df)),
+            delta=get_percentage_comparison_by_event(
+                get_shots_on_goal_df(match_events_df),
+                get_shots_on_goal_df(original_match_events_df),
+            ),
+        )
         col3.metric(
-            "Total de Passes", len(match_events_df[match_events_df["type"] == "Pass"])
+            "Passes",
+            len(match_events_df[match_events_df["type"] == "Pass"]),
+            delta=get_percentage_comparison_by_event(
+                match_events_df[match_events_df["type"] == "Pass"],
+                original_match_events_df[original_match_events_df["type"] == "Pass"],
+            ),
         )
         col4.metric(
             "Faltas Cometidas",
             len(match_events_df[match_events_df["type"] == "Foul Committed"]),
+            delta=get_percentage_comparison_by_event(
+                match_events_df[match_events_df["type"] == "Foul Committed"],
+                original_match_events_df[
+                    original_match_events_df["type"] == "Foul Committed"
+                ],
+            ),
         )
 
         # ---- Plots
@@ -801,34 +848,34 @@ def view_explore():
                 home_team,
                 event_type="Shot",
                 event_name="Chutes",
-                orientation="h",
+                orientation="v",
             )
-            progress_bar.progress(70, text="Finalizado: Total de Chutes por Jogador...")
+            progress_bar.progress(70, text="Finalizado: Chutes por Jogador...")
         with col2:
             plot_bar_chart_events_by_player(
                 match_events_df,
                 alway_team,
                 event_type="Shot",
                 event_name="Chutes",
-                orientation="h",
+                orientation="v",
             )
-            progress_bar.progress(80, text="Finalizado: Total de Chutes por Jogador...")
+            progress_bar.progress(80, text="Finalizado: Chutes por Jogador...")
 
         # Passes by player
         with col1:
             plot_bar_chart_events_by_player(
                 match_events_df, home_team, event_type="Pass"
             )
-            progress_bar.progress(90, text="Finalizado: Total de Passes por Jogador...")
+            progress_bar.progress(90, text="Finalizado: Passes por Jogador...")
         with col2:
             plot_bar_chart_events_by_player(
                 match_events_df, alway_team, event_type="Pass"
             )
-            progress_bar.progress(95, text="Finalizado: Total de Passes por Jogador...")
+            progress_bar.progress(95, text="Finalizado: Passes por Jogador...")
 
         # Area graph of passes by player
         plot_area_graph_events_by_team(match_events_df, event_type="Pass")
-        progress_bar.progress(100, text="Finalizado: Total de Passes por Minuto...")
+        progress_bar.progress(100, text="Finalizado: Passes por Minuto...")
 
         progress_bar.empty()
 
