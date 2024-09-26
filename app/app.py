@@ -168,15 +168,15 @@ def get_match_stats_dict(match_events_df, stats_map=None):
 
     if stats_map is None:
         stats_map = {
-            "Total de Chutes": "Shot",
-            "Total de Passes": "Pass",
-            "Faltas": {"type": "Foul Committed"},
-            "Escanteios": {"play_pattern": "From Corner"},
-            "Cartões Amarelos": {
+            "⚽ Total de Chutes": "Shot",
+            "🅿️ Total de Passes": "Pass",
+            "❌ Faltas": {"type": "Foul Committed"},
+            "🏳️ Escanteios": {"play_pattern": "From Corner"},
+            "🟨 Cartões Amarelos": {
                 "foul_committed_card": "Yellow Card",
                 "bad_behaviour_card": "Yellow Card",
             },
-            "Cartões Vermelhos": {
+            "🟥 Cartões Vermelhos": {
                 "foul_committed_card": "Red Card",
                 "bad_behaviour_card": "Red Card",
             },
