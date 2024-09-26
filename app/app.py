@@ -95,7 +95,8 @@ def get_teams(competition_id, season_id, match_id):
 
 
 @st.cache_data(ttl=3600)
-def get_match_score_dict(competition_id, season_id, match_id):
+def generate_match_score_dict(competition_id, season_id, match_id):
+
     # Get goals for open play and penalties
     goals = get_goals_df(match_id)
     teams = get_teams(competition_id, season_id, match_id)
@@ -103,17 +104,6 @@ def get_match_score_dict(competition_id, season_id, match_id):
     # Penalty goals are counted after the minute 120
     penalty_goals = goals[goals["minute"] >= 120]
     open_play_goals = goals[goals["minute"] < 120]
-
-    # Get total goals for each team
-    open_play_goals = open_play_goals.groupby("team").size()
-    penalty_goals = penalty_goals.groupby("team").size()
-
-    home_team_open_play_goals = (
-        open_play_goals[teams[0]] if teams[0] in open_play_goals else 0
-    )
-    home_team_penalty_goals = (
-        penalty_goals[teams[0]] if teams[0] in penalty_goals else 0
-    )
 
     # Get player name and time for each goal
     home_team_player_goals = goals[goals["team"] == teams[0]][["player", "minute"]]
@@ -129,12 +119,22 @@ def get_match_score_dict(competition_id, season_id, match_id):
         alway_team_player_goals_text += f"{row['player']} ({row['minute']}'), "
     alway_team_player_goals_text = alway_team_player_goals_text[:-2]
 
-    # Check if there are two teams
+    # Get total goals for each team
+    open_play_goals = open_play_goals.groupby("team").size()
+    penalty_goals = penalty_goals.groupby("team").size()
+
+    home_team_open_play_goals = (
+        open_play_goals[teams[0]] if teams[0] in open_play_goals else 0
+    )
+    home_team_penalty_goals = (
+        penalty_goals[teams[0]] if teams[0] in penalty_goals else 0
+    )
+
+    # Get total goals for the second team if available
     if len(teams) == 2:
         alway_team_open_play_goals = (
             open_play_goals[teams[1]] if teams[1] in open_play_goals else 0
         )
-
         alway_team_penalty_goals = (
             penalty_goals[teams[1]] if teams[1] in penalty_goals else 0
         )
@@ -180,9 +180,10 @@ def get_shots_on_goal_df(match_events_df, team=""):
 
 
 @st.cache_data(ttl=3600)
-def get_match_stats_dict(match_events_df, stats_map=None):
+def get_match_events_count_dict(match_events_df, stats_map=None):
     events = match_events_df
 
+    # Define the default stats map
     if stats_map is None:
         stats_map = {
             "⚽ Total de Chutes": "Shot",
@@ -228,15 +229,16 @@ def generate_match_name(matches_df, match_id):
     match_id = int(match_id)
     match_date = matches_df[matches_df["match_id"] == match_id]["match_date"].values[0]
     match_name = (
+        # Team names
         (
             matches_df[matches_df["match_id"] == match_id]["home_team"]
             + " x "
             + matches_df[matches_df["match_id"] == match_id]["away_team"]
         )
-        + " - "
-        + match_date
-        + " - "
-        + str(match_id)
+        # Match date
+        + f" - {match_date}"
+        # Match id
+        + f" - {str(match_id)}"
     )
     return match_name.values[0]
 
@@ -421,7 +423,7 @@ def display_match_score(score_obj):
 
 
 def display_overall_match_stats(match_events_df, home_team, alway_team):
-    stats = get_match_stats_dict(match_events_df)
+    stats = get_match_events_count_dict(match_events_df)
 
     col1, col2, col3 = st.columns(get_vs_column_cfg())
     stats_names = list(stats[home_team].keys())
@@ -675,12 +677,11 @@ def view_explore():
     # Show explore view selector
     current_explore_view = explore_view_selector()
 
-    # Explore the data
-    ##############################
+    # -- Explore the data
     if current_explore_view == "Análise da Partida":
         st.write(f"---")
 
-        score_obj = get_match_score_dict(competition_id, season_id, match_id)
+        score_obj = generate_match_score_dict(competition_id, season_id, match_id)
         home_team = score_obj["home_team_name"]
         alway_team = score_obj["alway_team_name"]
 
@@ -851,8 +852,7 @@ def view_explore():
             type="primary",
         )
 
-    # Explore the raw DataFrame
-    ##############################
+    # -- Explore the raw DataFrame
     if current_explore_view == "Explorar DataFrame":
 
         # Allow user to filter the displayed data
@@ -900,7 +900,7 @@ def view_about():
     st.write("""Este é um dashboard criado para explorar dados de futebol.""")
     st.write("### Fonte dos Dados")
     st.write(
-        """Os dados utilizados nessa foram disponibilizados pela biblioteca StatsBomb: https://github.com/statsbomb/statsbombpy"""
+        """Os dados utilizados nesse projeto foram disponibilizados pela biblioteca StatsBomb: https://github.com/statsbomb/statsbombpy"""
     )
     st.write("### Sobre o Autor")
     st.write(
