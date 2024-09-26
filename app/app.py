@@ -163,6 +163,17 @@ def get_goals_df(match_id, team="", shot_type=""):
 
 
 @st.cache_data(ttl=3600)
+def get_shots_on_goal_df(match_events_df, team=""):
+    shots_on_goal = match_events_df[
+        match_events_df["shot_outcome"].isin(["Goal", "Saved", "Saved to Corner"])
+    ]
+
+    if team:
+        shots_on_goal = shots_on_goal[shots_on_goal["team"] == team]
+    return shots_on_goal
+
+
+@st.cache_data(ttl=3600)
 def get_match_stats_dict(match_events_df, stats_map=None):
     events = match_events_df
 
@@ -202,13 +213,6 @@ def get_match_stats_dict(match_events_df, stats_map=None):
         stats[team] = team_stats
 
     return stats
-
-
-def filter_events_by_time(match_events_df, time_filter):
-    return match_events_df[
-        (match_events_df["minute"] >= time_filter[0])
-        & (match_events_df["minute"] <= time_filter[1])
-    ]
 
 
 ############## Display Functions ##############
@@ -496,6 +500,7 @@ def view_explore():
         home_team = score_obj["home_team_name"]
         alway_team = score_obj["alway_team_name"]
 
+        #  ---- Match summary
         # Match score
         display_match_score(score_obj)
         st.write(f"---")
@@ -504,13 +509,16 @@ def view_explore():
         display_overall_match_stats(match_events_df, home_team, alway_team)
         st.write(f"---")
 
-        # DataFrame Filters
+        #  ---- DataFrame filters
         with st.expander("⚙️ Filtrar"):
             # Time filter
             time_filter = st.slider(
                 "Filtrar por Minuto", min_value=0, max_value=120, value=(0, 120)
             )
-            match_events_df = filter_events_by_time(match_events_df, time_filter)
+            match_events_df = match_events_df[
+                (match_events_df["minute"] >= time_filter[0])
+                & (match_events_df["minute"] <= time_filter[1])
+            ]
             # Player filter
             players = match_events_df["player"].dropna().unique()
             players.sort()
@@ -527,16 +535,32 @@ def view_explore():
             if event_type != "Todos":
                 match_events_df = match_events_df[match_events_df["type"] == event_type]
 
+        #  --- Metrics
+        col1, col2, col3, col4 = st.columns(4)
+
+        col1.metric(
+            "Total de Chutes", len(match_events_df[match_events_df["type"] == "Shot"])
+        )
+        col2.metric("Chutes ao Gol", len(get_shots_on_goal_df(match_events_df)))
+        col3.metric(
+            "Total de Passes", len(match_events_df[match_events_df["type"] == "Pass"])
+        )
+        col4.metric(
+            "Faltas Cometidas",
+            len(match_events_df[match_events_df["type"] == "Foul Committed"]),
+        )
+
+        # ---- Plots
         # Pass map
         progress_bar = st.progress(0, text="Gerando visualizações...")
 
-        col1, col2, col3 = st.columns(get_vs_column_cfg())
+        col1, col2 = st.columns(2)
         with col1:
             title = f"Mapa de Passes - {home_team}"
             st.write(f"##### {title}")
             plot_event_map(match_events_df, home_team, event_type="Pass")
             progress_bar.progress(25, text=f"Finalizado: {title}...")
-        with col3:
+        with col2:
             title = f"Mapa de Passes - {alway_team}"
             st.write(f"##### {title}")
             plot_event_map(match_events_df, alway_team, event_type="Pass")
@@ -550,7 +574,7 @@ def view_explore():
                 match_events_df, home_team, event_type="Shot", color="yellow"
             )
             progress_bar.progress(75, text=f"Finalizado: {title}...")
-        with col3:
+        with col2:
             title = f"Mapa de Chutes - {alway_team}"
             st.write(f"##### {title}")
             plot_event_map(
@@ -561,7 +585,7 @@ def view_explore():
         st.write(f"---")
 
         # Display the data in a DataFrame
-        st.write("##### DataFrame dos Eventos da Partida")
+        st.write("##### DataFrame da Partida")
         st.dataframe(match_events_df, use_container_width=True)
 
         st.write("##### Download dos dados filtrados")
