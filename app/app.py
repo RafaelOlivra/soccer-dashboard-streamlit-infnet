@@ -1,16 +1,12 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-import locale
 from statsbombpy import sb
 from mplsoccer import Pitch
 
 # --------------------------
 # CONFIGURATIONS
 # ---------------------------
-
-# Set locale for number formatting
-locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 
 # Set page config
 st.set_page_config(
@@ -130,7 +126,7 @@ def generate_match_score_dict(competition_id, season_id, match_id):
         penalty_goals[teams[0]] if teams[0] in penalty_goals else 0
     )
 
-    # Get total goals for the second team if available
+    # [!] Second team may not be present in the goals DataFrame
     if len(teams) == 2:
         alway_team_open_play_goals = (
             open_play_goals[teams[1]] if teams[1] in open_play_goals else 0
@@ -250,8 +246,6 @@ def get_vs_column_cfg():
 def get_percentage_comparison_by_event(match_events_df, match_events_df2):
     events = len(match_events_df)
     events2 = len(match_events_df2)
-
-    print(events, events2)
 
     if events2 == 0:
         return "N/A"
