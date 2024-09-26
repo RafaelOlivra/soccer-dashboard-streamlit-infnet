@@ -505,31 +505,43 @@ def view_explore():
         st.write(f"---")
 
         # Allow filtering maps by event time
-        time_filter = st.slider(
-            "Filtrar por Minuto", min_value=0, max_value=120, value=(0, 120)
-        )
-        match_events_df = filter_events_by_time(match_events_df, time_filter)
+        with st.expander("⚙️ Filtrar"):
+            time_filter = st.slider(
+                "Filtrar por Minuto", min_value=0, max_value=120, value=(0, 120)
+            )
+            match_events_df = filter_events_by_time(match_events_df, time_filter)
 
         # Pass map
+        progress_bar = st.progress(0, text="Gerando visualizações...")
+
         col1, col2, col3 = st.columns(get_vs_column_cfg())
         with col1:
-            st.write(f"##### Mapa de Passes - {home_team}")
+            title = f"Mapa de Passes - {home_team}"
+            st.write(f"##### {title}")
             plot_event_map(match_events_df, home_team, event_type="Pass")
+            progress_bar.progress(25, text=f"Finalizado: {title}...")
         with col3:
-            st.write(f"##### Mapa de Passes - {alway_team}")
+            title = f"Mapa de Passes - {alway_team}"
+            st.write(f"##### {title}")
             plot_event_map(match_events_df, alway_team, event_type="Pass")
+            progress_bar.progress(50, text=f"Finalizado: {title}...")
 
         # Shot map
         with col1:
-            st.write(f"##### Mapa de Chutes - {home_team}")
+            title = f"Mapa de Chutes - {home_team}"
+            st.write(f"##### {title}")
             plot_event_map(
                 match_events_df, home_team, event_type="Shot", color="yellow"
             )
+            progress_bar.progress(75, text=f"Finalizado: {title}...")
         with col3:
-            st.write(f"##### Mapa de Chutes - {alway_team}")
+            title = f"Mapa de Chutes - {alway_team}"
+            st.write(f"##### {title}")
             plot_event_map(
                 match_events_df, alway_team, event_type="Shot", color="yellow"
             )
+            progress_bar.progress(100, text=f"Finalizado: {title}...")
+        progress_bar.empty()
 
     ##############################
     if current_explore_view == "Jogador VS Jogador":
