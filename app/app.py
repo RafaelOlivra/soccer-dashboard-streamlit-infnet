@@ -800,12 +800,12 @@ def view_explore():
             title = f"Mapa de Passes - {home_team}"
             st.write(f"###### {title}")
             plot_event_map(match_events_df, home_team, event_type="Pass")
-            progress_bar.progress(10, text=f"Finalizado: {title}...")
+            progress_bar.progress(10, text=f"Em progresso: {title}...")
         with col2:
             title = f"Mapa de Passes - {alway_team}"
             st.write(f"###### {title}")
             plot_event_map(match_events_df, alway_team, event_type="Pass")
-            progress_bar.progress(20, text=f"Finalizado: {title}...")
+            progress_bar.progress(20, text=f"Em progresso: {title}...")
 
         # Shot map
         with col1:
@@ -814,14 +814,14 @@ def view_explore():
             plot_event_map(
                 match_events_df, home_team, event_type="Shot", color="yellow"
             )
-            progress_bar.progress(30, text=f"Finalizado: {title}...")
+            progress_bar.progress(30, text=f"Em progresso: {title}...")
         with col2:
             title = f"Mapa de Chutes - {alway_team}"
             st.write(f"###### {title}")
             plot_event_map(
                 match_events_df, alway_team, event_type="Shot", color="yellow"
             )
-            progress_bar.progress(40, text=f"Finalizado: {title}...")
+            progress_bar.progress(40, text=f"Em progresso: {title}...")
 
         # Heatmap de Posse de Bola
         with col1:
@@ -830,7 +830,7 @@ def view_explore():
             plot_events_heatmap(
                 match_events_df, event_type="Carry", team_name=home_team
             )
-            progress_bar.progress(50, text=f"Finalizado: {title}...")
+            progress_bar.progress(50, text=f"Em progresso: {title}...")
 
         with col2:
             title = f"Heatmap Posse de Bola - {alway_team}"
@@ -838,7 +838,7 @@ def view_explore():
             plot_events_heatmap(
                 match_events_df, event_type="Carry", team_name=alway_team
             )
-            progress_bar.progress(60, text=f"Finalizado: {title}...")
+            progress_bar.progress(60, text=f"Em progresso: {title}...")
 
         # Shots by player
         with col1:
@@ -849,7 +849,7 @@ def view_explore():
                 event_name="Chutes",
                 orientation="v",
             )
-            progress_bar.progress(70, text="Finalizado: Chutes por Jogador...")
+            progress_bar.progress(70, text="Em progresso: Chutes por Jogador...")
         with col2:
             plot_bar_chart_events_by_player(
                 match_events_df,
@@ -858,23 +858,23 @@ def view_explore():
                 event_name="Chutes",
                 orientation="v",
             )
-            progress_bar.progress(80, text="Finalizado: Chutes por Jogador...")
+            progress_bar.progress(80, text="Em progresso: Chutes por Jogador...")
 
         # Passes by player
         with col1:
             plot_bar_chart_events_by_player(
                 match_events_df, home_team, event_type="Pass"
             )
-            progress_bar.progress(90, text="Finalizado: Passes por Jogador...")
+            progress_bar.progress(90, text="Em progresso: Passes por Jogador...")
         with col2:
             plot_bar_chart_events_by_player(
                 match_events_df, alway_team, event_type="Pass"
             )
-            progress_bar.progress(95, text="Finalizado: Passes por Jogador...")
+            progress_bar.progress(95, text="Em progresso: Passes por Jogador...")
 
         # Area graph of passes by player
         plot_area_graph_events_by_team(match_events_df, event_type="Pass")
-        progress_bar.progress(100, text="Finalizado: Passes por Minuto...")
+        progress_bar.progress(100, text="Em progresso: Passes por Minuto...")
 
         progress_bar.empty()
 
@@ -925,7 +925,7 @@ def view_explore():
         st.dataframe(df, use_container_width=True)
 
         # Permite ao usuário download do arquivo CSV
-        st.write("##### Download dos dados filtrados")
+        st.write("###### Download dos dados filtrados")
         st.write(
             "Clique no botão abaixo para fazer o download do arquivo CSV filtrado com base nas suas seleções."
         )
@@ -943,15 +943,51 @@ def view_explore():
 ### ABOUT ###
 def view_about():
     st.title("✨ Sobre")
-    st.write("""Este é um dashboard criado para explorar dados de futebol.""")
-    st.write("### Fonte dos Dados")
     st.write(
-        """Os dados utilizados nesse projeto foram disponibilizados pela biblioteca StatsBomb: https://github.com/statsbomb/statsbombpy"""
+        """
+        Este é um dashboard interativo criado para a análise e visualização de dados relacionados ao futebol.
+        Ele oferece uma maneira intuitiva de explorar diversas estatísticas de equipes e jogadores, desempenho em partidas, e muito mais.
+        """
     )
-    st.write("### Sobre o Autor")
-    st.write(
-        """Este projeto foi criado Rafael Oliveira: https://github.com/RafaelOlivra/datario-streamlit-exploration"""
-    )
+
+    tabs = st.tabs(["Sobre o Projeto", "Fonte dos Dados", "Sobre o Autor"])
+
+    with tabs[0]:
+        st.write("### Sobre o Projeto")
+        st.write(
+            """
+            Este projeto foi desenvolvido com o objetivo de fornecer uma plataforma prática para explorar dados de
+            futebol de maneira visual.
+            Utilizando a biblioteca StatsBombPy, conseguimos acessar uma vasta gama de dados detalhados sobre partidas
+            de futebol, permitindo análises personalizadas e insights valiosos para os fãs, analistas, e entusiastas do esporte.
+            """
+        )
+
+    with tabs[1]:
+        st.write("### Fonte dos Dados")
+        st.write(
+            """
+            Os dados utilizados neste projeto são fornecidos pela StatsBomb, uma plataforma de análise de 
+            dados de futebol. A StatsBomb coleta e disponibiliza informações detalhadas sobre diversas competições, 
+            permitindo que qualquer pessoa, de fãs a analistas profissionais, tenha acesso a dados robustos e confiáveis. 
+            O acesso a esses dados é gratuito, sendo uma excelente fonte para análises profundas sobre o futebol moderno.
+            """
+        )
+        st.write("Para mais informações, acesse: [StatsBomb](https://statsbomb.com/)")
+
+    with tabs[2]:
+        st.write("### Sobre o Autor")
+        st.write(
+            """
+            Olá! Sou **Rafael Oliveira**!  \
+            
+            Sou um desenvolvedor full-stack com um pézinho em Data Science. Este projeto foi desenvolvido
+            como um trabalho para o curso de Ciência de Dados do Infnet.  \
+                
+            Para acompanhar meus outros projetos, acesse meu GitHub:
+            [Rafael Oliveira](https://github.com/RafaelOlivra/datario-streamlit-exploration)
+            """
+        )
 
 
 # --------------------------
