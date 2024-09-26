@@ -1,13 +1,8 @@
-import time
 import streamlit as st
-from streamlit_js_eval import streamlit_js_eval
-import pandas as pd
 import plotly.express as px
-import pydeck as pdk
-import time
-import numpy as np
 import locale
 from statsbombpy import sb
+from mplsoccer import Pitch
 
 ############## CONFIG ##############
 
@@ -31,7 +26,7 @@ state = {
     "match_id": None,
     "data": None,
     "current_view": 0,
-    "current_explore_view": "Resumo da Partida",
+    "current_explore_view": "Análise da Partida",
 }
 
 
@@ -48,18 +43,14 @@ for key, value in state.items():
     if key not in st.session_state:
         set_state(key, value)
 
-
-############## UTIL FUNCTIONS ##############
-
-
-def format_number(number):
-    # Convert to number if necessary
-    if isinstance(number, str):
-        number = int(number)
-    return locale.format_string("%d", number, grouping=True)
+############## SETTINGS ##############
 
 
-############## DATA FUNCTIONS ##############
+def get_vs_column_cfg():
+    return [4, 2, 4]
+
+
+############## VIEW FUNCTIONS ##############
 
 
 def get_available_views():
@@ -68,6 +59,9 @@ def get_available_views():
 
 def get_current_view():
     return get_state("current_view") or get_available_views()[0]
+
+
+############## StatsBombPy DATA FUNCTIONS ##############
 
 
 @st.cache_data(ttl=3600)
@@ -85,6 +79,7 @@ def get_match_events(match_id):
     return sb.events(match_id=match_id)
 
 
+@st.cache_data(ttl=3600)
 def get_teams(competition_id, season_id, match_id):
     matches = get_competition_matches(competition_id, season_id)
     match = matches[matches["match_id"] == match_id]
@@ -93,14 +88,15 @@ def get_teams(competition_id, season_id, match_id):
     return home_team, away_team
 
 
+@st.cache_data(ttl=3600)
 def get_match_score_dict(competition_id, season_id, match_id):
     # Get goals for open play and penalties
     goals = get_goals_df(match_id)
     teams = get_teams(competition_id, season_id, match_id)
 
     # Penalty goals are counted after the minute 120
-    penalty_goals = goals[goals["minute"] > 120]
-    open_play_goals = goals[goals["minute"] <= 120]
+    penalty_goals = goals[goals["minute"] >= 120]
+    open_play_goals = goals[goals["minute"] < 120]
 
     # Get total goals for each team
     open_play_goals = open_play_goals.groupby("team").size()
@@ -152,6 +148,7 @@ def get_match_score_dict(competition_id, season_id, match_id):
     }
 
 
+@st.cache_data(ttl=3600)
 def get_goals_df(match_id, team="", shot_type=""):
     events = get_match_events(match_id)
     goals = events[events["type"] == "Shot"]
@@ -165,22 +162,25 @@ def get_goals_df(match_id, team="", shot_type=""):
     return goals
 
 
-def get_match_stats_dict(match_events_df):
+@st.cache_data(ttl=3600)
+def get_match_stats_dict(match_events_df, stats_map=None):
     events = match_events_df
-    stats_map = {
-        "Total de Chutes": "Shot",
-        "Total de Passes": "Pass",
-        "Faltas": {"type": "Foul Committed"},
-        "Escanteios": {"play_pattern": "From Corner"},
-        "Cartões Amarelos": {
-            "foul_committed_card": "Yellow Card",
-            "bad_behaviour_card": "Yellow Card",
-        },
-        "Cartões Vermelhos": {
-            "foul_committed_card": "Red Card",
-            "bad_behaviour_card": "Red Card",
-        },
-    }
+
+    if stats_map is None:
+        stats_map = {
+            "Total de Chutes": "Shot",
+            "Total de Passes": "Pass",
+            "Faltas": {"type": "Foul Committed"},
+            "Escanteios": {"play_pattern": "From Corner"},
+            "Cartões Amarelos": {
+                "foul_committed_card": "Yellow Card",
+                "bad_behaviour_card": "Yellow Card",
+            },
+            "Cartões Vermelhos": {
+                "foul_committed_card": "Red Card",
+                "bad_behaviour_card": "Red Card",
+            },
+        }
 
     # Get stats for each team
     teams = events["team"].unique()
@@ -204,11 +204,18 @@ def get_match_stats_dict(match_events_df):
     return stats
 
 
+def filter_events_by_time(match_events_df, time_filter):
+    return match_events_df[
+        (match_events_df["minute"] >= time_filter[0])
+        & (match_events_df["minute"] <= time_filter[1])
+    ]
+
+
 ############## Display Functions ##############
 
 
 def display_match_score(score_obj):
-    col1, col2, col3 = st.columns([4, 2, 4])
+    col1, col2, col3 = st.columns(get_vs_column_cfg())
     with col1:
         st.markdown(
             f"<h5 style='text-align: center; padding: 0;'>{score_obj['home_team_name']}</h5>",
@@ -257,7 +264,7 @@ def display_match_score(score_obj):
 def display_overall_match_stats(match_events_df, home_team, alway_team):
     stats = get_match_stats_dict(match_events_df)
 
-    col1, col2, col3 = st.columns([4, 2, 4])
+    col1, col2, col3 = st.columns(get_vs_column_cfg())
     stats_names = list(stats[home_team].keys())
     with col1:
         for stat_name in stats_names:
@@ -389,7 +396,7 @@ def matches_selector(competition_id: int, season_id: int):
 
 
 def explore_view_selector():
-    explore_options = ["Resumo da Partida", "Jogador VS Jogador", "DataFrame"]
+    explore_options = ["Análise da Partida", "Explorar DataFrame"]
     current_explore_view = get_state("current_explore_view") or explore_options[0]
     explore_view = st.selectbox(
         "Opções de Visualização",
@@ -422,7 +429,48 @@ def generate_match_name(matches_df, match_id):
 
 ############## PLOTS & GRAPHS ##############
 
-############## VIEWS ##############
+
+@st.cache_data(ttl=3600)
+def plot_event_map(match_events_df, team_name, event_type="Pass", color="blue"):
+    with st.spinner("Carregando..."):
+        try:
+            # Filter for passes by the given team
+            events = match_events_df[
+                (match_events_df["type"] == event_type)
+                & (match_events_df["team"] == team_name)
+            ]
+
+            # Create a soccer pitch
+            pitch = Pitch(
+                pitch_type="statsbomb", pitch_color="grass", line_color="white"
+            )
+
+            # Set up the pitch plot
+            fig, ax = pitch.draw(figsize=(10, 7))
+
+            # Plot the passes
+            event_name = event_type.lower()
+            pitch.arrows(
+                events["location"].str[0],
+                events["location"].str[1],
+                events[f"{event_name}_end_location"].str[0],
+                events[f"{event_name}_end_location"].str[1],
+                width=2,
+                headwidth=3,
+                headlength=5,
+                color=color,
+                ax=ax,
+                label=f"{event_type}s",
+            )
+
+            # Add title and display plot
+            st.pyplot(fig)
+        except Exception as e:
+            st.error(f"Erro ao gerar o gráfico: {e}")
+        return True
+
+
+############## PAGES ##############
 
 
 ### EXPLORE ###
@@ -441,17 +489,47 @@ def view_explore():
 
     # Explore the data
     ##############################
-    if current_explore_view == "Resumo da Partida":
+    if current_explore_view == "Análise da Partida":
         st.write(f"---")
 
         score_obj = get_match_score_dict(competition_id, season_id, match_id)
         home_team = score_obj["home_team_name"]
         alway_team = score_obj["alway_team_name"]
 
+        # Match score
         display_match_score(score_obj)
         st.write(f"---")
+
+        # Match stats
         display_overall_match_stats(match_events_df, home_team, alway_team)
         st.write(f"---")
+
+        # Allow filtering maps by event time
+        time_filter = st.slider(
+            "Filtrar por Minuto", min_value=0, max_value=120, value=(0, 120)
+        )
+        match_events_df = filter_events_by_time(match_events_df, time_filter)
+
+        # Pass map
+        col1, col2, col3 = st.columns(get_vs_column_cfg())
+        with col1:
+            st.write(f"##### Mapa de Passes - {home_team}")
+            plot_event_map(match_events_df, home_team, event_type="Pass")
+        with col3:
+            st.write(f"##### Mapa de Passes - {alway_team}")
+            plot_event_map(match_events_df, alway_team, event_type="Pass")
+
+        # Shot map
+        with col1:
+            st.write(f"##### Mapa de Chutes - {home_team}")
+            plot_event_map(
+                match_events_df, home_team, event_type="Shot", color="yellow"
+            )
+        with col3:
+            st.write(f"##### Mapa de Chutes - {alway_team}")
+            plot_event_map(
+                match_events_df, alway_team, event_type="Shot", color="yellow"
+            )
 
     ##############################
     if current_explore_view == "Jogador VS Jogador":
