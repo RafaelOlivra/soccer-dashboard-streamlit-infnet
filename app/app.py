@@ -546,13 +546,12 @@ def plot_events_heatmap(
             pitch = Pitch(
                 pitch_type="statsbomb",
                 line_zorder=2,
-                pitch_color="#22312b",
-                line_color="#efefef",
+                pitch_color="grass",
+                line_color="white",
             )
 
             # Set up the pitch plot
             fig, ax = pitch.draw(figsize=(10, 7))
-            fig.set_facecolor("#22312b")
 
             # Calculate the bin statistics
             bin_statistic = pitch.bin_statistic(
