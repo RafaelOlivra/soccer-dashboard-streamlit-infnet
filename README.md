@@ -1,30 +1,52 @@
 # Dashboard - StatsBombPy
 
-Este projeto foi feito para o Assessment da disciplina **Desenvolvimento Front-End com Python (com Streamlit)**
+## Descrição do Projeto
 
-https://lms.infnet.edu.br/moodle/mod/assign/view.php?id=413874
+Este projeto foi desenvolvido com o objetivo de fornecer uma plataforma prática para explorar dados de futebol de maneira visual. Utilizando a biblioteca **StatsBombPy**, conseguimos acessar uma vasta gama de dados detalhados sobre partidas de futebol, permitindo análises personalizadas e insights valiosos para fãs, analistas e entusiastas do esporte.
+
+Este projeto foi criado como parte do Assessment da disciplina **Desenvolvimento Front-End com Python (com Streamlit)**.
 
 ---
 
-**Rafael Soares de Oliveira**
+### Autor
 
+**Rafael Soares de Oliveira**  
 Infnet - Ciência de Dados | Outubro 2024
 
-### Dados
+---
 
-Os dados utilizados nessa foram disponibilizados pela biblioteca StatsBomb: https://github.com/statsbomb/statsbombpy
+### Acessar o Dashboard
 
-### Inicializar o repositório (Com venv)
+Você pode acessar uma versão online do dashboard [aqui](https://soccer-dashboard-ro.streamlit.app/).
 
-```console
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-```
+### Fonte dos Dados
 
-Inicialize o Streamlit.
+Os dados utilizados neste projeto foram disponibilizados pela biblioteca StatsBomb. Para mais informações, visite o repositório oficial: [StatsBombPy GitHub](https://github.com/statsbomb/statsbombpy).
 
-```console
-streamlit run app/app.py
-```
+---
 
-Acesse o dashboard através do navegador no endereço http://localhost:8501.
+### Inicializar o Repositório (Com venv)
+
+Para iniciar o repositório localmente, siga os passos abaixo:
+
+1. Crie um ambiente virtual e ative-o:
+
+    ```console
+    python -m venv .venv && source .venv/bin/activate
+    ```
+
+2. Instale as dependências necessárias:
+
+    ```console
+    pip install -r requirements.txt
+    ```
+
+3. Inicialize o Streamlit:
+
+    ```console
+    streamlit run app/app.py
+    ```
+
+4. Acesse o dashboard através do navegador no endereço: [http://localhost:8501](http://localhost:8501).
+
+---
