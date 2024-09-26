@@ -466,7 +466,7 @@ def plot_event_map(match_events_df, team_name, event_type="Pass", color="blue"):
             # Add title and display plot
             st.pyplot(fig)
         except Exception as e:
-            st.error(f"Erro ao gerar o gráfico: {e}")
+            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
         return True
 
 
@@ -504,12 +504,28 @@ def view_explore():
         display_overall_match_stats(match_events_df, home_team, alway_team)
         st.write(f"---")
 
-        # Allow filtering maps by event time
+        # DataFrame Filters
         with st.expander("⚙️ Filtrar"):
+            # Time filter
             time_filter = st.slider(
                 "Filtrar por Minuto", min_value=0, max_value=120, value=(0, 120)
             )
             match_events_df = filter_events_by_time(match_events_df, time_filter)
+            # Player filter
+            players = match_events_df["player"].dropna().unique()
+            players.sort()
+            player = st.selectbox("Filtrar por Jogador", ["Todos"] + list(players))
+            if player != "Todos":
+                match_events_df = match_events_df[match_events_df["player"] == player]
+
+            # Event filter
+            event_types = match_events_df["type"].dropna().unique()
+            event_types.sort()
+            event_type = st.selectbox(
+                "Filtrar por Evento", ["Todos"] + list(event_types)
+            )
+            if event_type != "Todos":
+                match_events_df = match_events_df[match_events_df["type"] == event_type]
 
         # Pass map
         progress_bar = st.progress(0, text="Gerando visualizações...")
