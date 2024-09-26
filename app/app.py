@@ -494,7 +494,9 @@ def plot_event_map(match_events_df, team_name="", event_type="Pass", color="blue
             # Add title and display plot
             st.pyplot(fig)
         except Exception as e:
-            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
+            st.warning(
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+            )
         return True
 
 
@@ -583,7 +585,9 @@ def plot_events_heatmap(
             st.pyplot(fig)
 
         except Exception as e:
-            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
+            st.warning(
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+            )
             st.exception(e)
         return True
 
@@ -637,7 +641,9 @@ def plot_bar_chart_events_by_player(
             # Display the plot
             st.plotly_chart(fig)
         except Exception as e:
-            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
+            st.warning(
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+            )
         return True
 
 
@@ -676,7 +682,9 @@ def plot_area_graph_events_by_team(
             # Display the plot
             st.plotly_chart(fig)
         except Exception as e:
-            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
+            st.warning(
+                f"⚠️ Não é possível gerar uma visualização para os dados selecionados.."
+            )
         return True
 
 
@@ -791,9 +799,9 @@ def view_explore():
 
         # ---- Plots
 
-        # Pass map
         progress_bar = st.progress(0, text="Gerando visualizações...")
 
+        # Pass map
         col1, col2 = st.columns(2)
         with col1:
             title = f"Mapa de Passes - {home_team}"
@@ -807,6 +815,7 @@ def view_explore():
             progress_bar.progress(20, text=f"Em progresso: {title}...")
 
         # Shot map
+        col1, col2 = st.columns(2)
         with col1:
             title = f"Mapa de Chutes - {home_team}"
             st.write(f"###### {title}")
@@ -823,6 +832,7 @@ def view_explore():
             progress_bar.progress(40, text=f"Em progresso: {title}...")
 
         # Heatmap de Posse de Bola
+        col1, col2 = st.columns(2)
         with col1:
             title = f"Heatmap Posse de Bola - {home_team}"
             st.write(f"###### {title}")
@@ -840,6 +850,7 @@ def view_explore():
             progress_bar.progress(60, text=f"Em progresso: {title}...")
 
         # Shots by player
+        col1, col2 = st.columns(2)
         with col1:
             plot_bar_chart_events_by_player(
                 match_events_df,
@@ -860,6 +871,7 @@ def view_explore():
             progress_bar.progress(80, text="Em progresso: Chutes por Jogador...")
 
         # Passes by player
+        col1, col2 = st.columns(2)
         with col1:
             plot_bar_chart_events_by_player(
                 match_events_df, home_team, event_type="Pass"
