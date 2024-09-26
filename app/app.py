@@ -47,7 +47,7 @@ for key, value in state.items():
 
 
 def get_vs_column_cfg():
-    return [4, 2, 4]
+    return [5, 2, 5]
 
 
 ############## VIEW FUNCTIONS ##############
@@ -558,10 +558,26 @@ def view_explore():
             )
             progress_bar.progress(100, text=f"Finalizado: {title}...")
         progress_bar.empty()
+        st.write(f"---")
 
-    ##############################
-    if current_explore_view == "Jogador VS Jogador":
-        pass
+        # Display the data in a DataFrame
+        st.write("##### DataFrame dos Eventos da Partida")
+        st.dataframe(match_events_df, use_container_width=True)
+
+        st.write("##### Download dos dados filtrados")
+        st.write(
+            "Clique no botão abaixo para fazer o download do arquivo CSV filtrado com base nas suas seleções."
+        )
+        csv_content = match_events_df.to_csv(index=False)
+        st.download_button(
+            label="Download do CSV",
+            data=csv_content,
+            file_name=f"{match_name}.csv",
+            mime="text/csv",
+            use_container_width=True,
+            type="primary",
+        )
+
     ##############################
     if current_explore_view == "DataFrame":
 
