@@ -477,57 +477,165 @@ def plot_event_map(match_events_df, team_name="", event_type="Pass", color="blue
 
 
 @st.cache_data(ttl=3600)
-def plot_player_heatmap(match_events_df, team_name="", player_name=""):
+def plot_events_heatmap(
+    match_events_df,
+    team_name="",
+    event_type="Pass",
+):
     with st.spinner("Carregando..."):
         try:
-            # Filter for passes by the given team
-            events = match_events_df[(match_events_df["type"] == "Pass")]
+            # Filter for events
+            events = match_events_df[(match_events_df["type"] == event_type)]
 
-            # Filter for events by the given team and player
+            # Filter for events by the given team
             if team_name:
                 events = events[events["team"] == team_name]
-            if player_name:
-                events = events[events["player"] == player_name]
 
             # Ensure that 'location' column is available and contains coordinates
             if "location" not in events.columns or events["location"].isnull().all():
                 st.warning("No location data available to plot the heatmap.")
                 return
 
-            # Extract 'x' and 'y' coordinates from 'location' (assuming it's a list of [x, y] coordinates)
+            # Extract 'x' and 'y' coordinates from 'location' (ensure it's a valid list of [x, y] coordinates)
             locations = (
                 events["location"]
                 .dropna()
                 .apply(
-                    lambda loc: loc if isinstance(loc, list) and len(loc) == 2 else None
+                    lambda loc: (
+                        loc
+                        if isinstance(loc, list)
+                        and len(loc) == 2
+                        and all(isinstance(i, (int, float)) for i in loc)
+                        else None
+                    )
                 )
+                .dropna()
             )
-            locations = pd.DataFrame(locations.tolist(), columns=["x", "y"]).dropna()
+
+            # Convert list of valid locations to a DataFrame
+            if locations.empty:
+                st.warning("⚠️ Dados inválidos para gerar o heatmap.")
+                return
+
+            # Create a DataFrame of x, y coordinates
+            locations_df = pd.DataFrame(locations.tolist(), columns=["x", "y"])
 
             # Create a soccer pitch
             pitch = Pitch(
-                pitch_type="statsbomb", pitch_color="grass", line_color="white"
+                pitch_type="statsbomb",
+                line_zorder=2,
+                pitch_color="#22312b",
+                line_color="#efefef",
             )
 
             # Set up the pitch plot
             fig, ax = pitch.draw(figsize=(10, 7))
+            fig.set_facecolor("#22312b")
 
-            # Plot the heatmap using the x and y coordinates
-            pitch.heatmap(
-                locations[["x", "y"]].values,
+            # Calculate the bin statistics
+            bin_statistic = pitch.bin_statistic(
+                locations_df["x"],
+                locations_df["y"],
+                statistic="count",
+                bins=(6, 5),
+                normalize=True,
+            )
+
+            # Normalize the statistics  as a percentage of the total number of events
+            bin_statistic["statistic"] = (
+                bin_statistic["statistic"] / bin_statistic["statistic"].sum()
+            )
+
+            # Plot the heatmap on the pitch
+            pitch.heatmap(bin_statistic, ax=ax, cmap="coolwarm", edgecolors="#22312b")
+            labels = pitch.label_heatmap(
+                bin_statistic,
+                color="#f4edf0",
+                fontsize=18,
                 ax=ax,
-                edgecolors="w",
-                bins=(10, 7),
-                cmap="coolwarm",
+                ha="center",
+                va="center",
+                str_format="{:.0%}",
             )
 
             # Add title and display plot
-            ax.set_title(f"Heatmap for {player_name} ({team_name})", fontsize=16)
             st.pyplot(fig)
 
         except Exception as e:
             st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
             st.exception(e)
+        return True
+
+
+def plot_bar_chart_events_by_player(
+    match_events_df,
+    team_name="",
+    event_type="Pass",
+    orientation="h",
+    event_name="Passes",
+    bar_color="blue",
+):
+    with st.spinner("Carregando..."):
+        try:
+            # Filter for events by the given team
+            events = match_events_df[(match_events_df["type"] == event_type)]
+
+            # Filter for events by the given team
+            if team_name:
+                events = events[events["team"] == team_name]
+
+            # Group by player and count the number of events
+            events_by_player = events.groupby("player").size().reset_index(name="count")
+
+            # Sort the players by the number of events
+            events_by_player = events_by_player.sort_values(by="count", ascending=False)
+
+            # Create a bar chart
+            fig = px.bar(
+                events_by_player,
+                x="count",
+                y="player",
+                orientation=orientation,
+                title=f"Total de {event_name} por Jogador - {team_name}",
+                labels={"count": f"Total de {event_name}", "player": "Jogador"},
+            )
+
+            # Display the plot
+            st.plotly_chart(fig)
+        except Exception as e:
+            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
+        return True
+
+
+def plot_area_graph_events_by_team(
+    match_events_df,
+    event_type="Pass",
+    event_name="Passes",
+):
+    with st.spinner("Carregando..."):
+        try:
+            # Filter for events by the given type (e.g., Passes)
+            events = match_events_df[(match_events_df["type"] == event_type)]
+
+            # Group by minute and team, and count the number of events
+            events_by_minute = (
+                events.groupby(["minute", "team"]).size().reset_index(name="count")
+            )
+
+            # Create an area graph, using 'team' for color differentiation
+            fig = px.area(
+                events_by_minute,
+                x="minute",
+                y="count",
+                color="team",  # This will color the areas by team
+                title=f"Total de {event_name} por Minuto",
+                labels={"count": f"Total de {event_name}", "minute": "Minuto"},
+            )
+
+            # Display the plot
+            st.plotly_chart(fig)
+        except Exception as e:
+            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
         return True
 
 
@@ -566,7 +674,7 @@ def view_explore():
         display_overall_match_stats(match_events_df, home_team, alway_team)
         st.write(f"---")
 
-        #  ---- DataFrame filters
+        #  ---- Filters
         with st.expander("⚙️ Filtrar"):
             # Time filter
             time_filter = st.slider(
@@ -576,21 +684,29 @@ def view_explore():
                 (match_events_df["minute"] >= time_filter[0])
                 & (match_events_df["minute"] <= time_filter[1])
             ]
+
+            col1, col2 = st.columns(2)
             # Player filter
-            players = match_events_df["player"].dropna().unique()
-            players.sort()
-            player = st.selectbox("Filtrar por Jogador", ["Todos"] + list(players))
-            if player != "Todos":
-                match_events_df = match_events_df[match_events_df["player"] == player]
+            with col1:
+                players = match_events_df["player"].dropna().unique()
+                players.sort()
+                player = st.selectbox("Filtrar por Jogador", ["Todos"] + list(players))
+                if player != "Todos":
+                    match_events_df = match_events_df[
+                        match_events_df["player"] == player
+                    ]
 
             # Event filter
-            event_types = match_events_df["type"].dropna().unique()
-            event_types.sort()
-            event_type = st.selectbox(
-                "Filtrar por Evento", ["Todos"] + list(event_types)
-            )
-            if event_type != "Todos":
-                match_events_df = match_events_df[match_events_df["type"] == event_type]
+            with col2:
+                event_types = match_events_df["type"].dropna().unique()
+                event_types.sort()
+                event_type = st.selectbox(
+                    "Filtrar por Evento", ["Todos"] + list(event_types)
+                )
+                if event_type != "Todos":
+                    match_events_df = match_events_df[
+                        match_events_df["type"] == event_type
+                    ]
 
         #  --- Metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -608,6 +724,7 @@ def view_explore():
         )
 
         # ---- Plots
+
         # Pass map
         progress_bar = st.progress(0, text="Gerando visualizações...")
 
@@ -616,12 +733,12 @@ def view_explore():
             title = f"Mapa de Passes - {home_team}"
             st.write(f"##### {title}")
             plot_event_map(match_events_df, home_team, event_type="Pass")
-            progress_bar.progress(25, text=f"Finalizado: {title}...")
+            progress_bar.progress(10, text=f"Finalizado: {title}...")
         with col2:
             title = f"Mapa de Passes - {alway_team}"
             st.write(f"##### {title}")
             plot_event_map(match_events_df, alway_team, event_type="Pass")
-            progress_bar.progress(50, text=f"Finalizado: {title}...")
+            progress_bar.progress(20, text=f"Finalizado: {title}...")
 
         # Shot map
         with col1:
@@ -630,21 +747,72 @@ def view_explore():
             plot_event_map(
                 match_events_df, home_team, event_type="Shot", color="yellow"
             )
-            progress_bar.progress(75, text=f"Finalizado: {title}...")
+            progress_bar.progress(30, text=f"Finalizado: {title}...")
         with col2:
             title = f"Mapa de Chutes - {alway_team}"
             st.write(f"##### {title}")
             plot_event_map(
                 match_events_df, alway_team, event_type="Shot", color="yellow"
             )
-            progress_bar.progress(100, text=f"Finalizado: {title}...")
+            progress_bar.progress(40, text=f"Finalizado: {title}...")
 
-        # Heatmap
+        # Heatmap de Posse de Bola
+        with col1:
+            title = f"Heatmap Posse de Bola - {home_team}"
+            st.write(f"##### {title}")
+            plot_events_heatmap(
+                match_events_df, event_type="Carry", team_name=home_team
+            )
+            progress_bar.progress(50, text=f"Finalizado: {title}...")
+
+        with col2:
+            title = f"Heatmap Posse de Bola - {alway_team}"
+            st.write(f"##### {title}")
+            plot_events_heatmap(
+                match_events_df, event_type="Carry", team_name=alway_team
+            )
+            progress_bar.progress(60, text=f"Finalizado: {title}...")
+
+        # Shots by player
         st.write(f"---")
-        st.write("##### Heatmap de Passe")
-        plot_player_heatmap(match_events_df)
+        with col1:
+            plot_bar_chart_events_by_player(
+                match_events_df,
+                home_team,
+                event_type="Shot",
+                event_name="Chutes",
+                orientation="h",
+            )
+            progress_bar.progress(70, text="Finalizado: Total de Chutes por Jogador...")
+        with col2:
+            plot_bar_chart_events_by_player(
+                match_events_df,
+                alway_team,
+                event_type="Shot",
+                event_name="Chutes",
+                orientation="h",
+            )
+            progress_bar.progress(80, text="Finalizado: Total de Chutes por Jogador...")
+
+        # Passes by player
+        with col1:
+            plot_bar_chart_events_by_player(
+                match_events_df, home_team, event_type="Pass"
+            )
+            progress_bar.progress(90, text="Finalizado: Total de Passes por Jogador...")
+        with col2:
+            plot_bar_chart_events_by_player(
+                match_events_df, alway_team, event_type="Pass"
+            )
+            progress_bar.progress(95, text="Finalizado: Total de Passes por Jogador...")
+
+        # Area graph of passes by player
+        plot_area_graph_events_by_team(match_events_df, event_type="Pass")
+        progress_bar.progress(100, text="Finalizado: Total de Passes por Minuto...")
+
         progress_bar.empty()
-        st.write(f"---")
+
+        # ---- DataFrame
 
         # Display the data in a DataFrame
         st.write("##### DataFrame da Partida")
@@ -664,6 +832,7 @@ def view_explore():
             type="primary",
         )
 
+    # Explore the raw DataFrame
     ##############################
     if current_explore_view == "Explorar DataFrame":
 
