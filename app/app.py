@@ -5,7 +5,9 @@ import locale
 from statsbombpy import sb
 from mplsoccer import Pitch
 
-############## CONFIG ##############
+# --------------------------
+# CONFIGURATIONS
+# ---------------------------
 
 # Set locale for number formatting
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
@@ -18,8 +20,11 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
-############## SESSION STATE FUNCTIONS ##############
+# --------------------------
+# SESSION STATE FUNCTIONS
+# ---------------------------
 
+# Default state
 state = {
     "selected_country": "Europe",
     "competition_id": None,
@@ -31,38 +36,38 @@ state = {
 }
 
 
+# Set session state
 def set_state(key, value):
     st.session_state[key] = value
 
 
+# Get session state
 def get_state(key):
     return st.session_state[key]
 
 
-# Set initial state
+# Set initial state for the current session
 for key, value in state.items():
     if key not in st.session_state:
         set_state(key, value)
 
-############## SETTINGS ##############
 
-
-def get_vs_column_cfg():
-    return [5, 2, 5]
-
-
-############## VIEW FUNCTIONS ##############
+# --------------------------
+# DASHBOARD STATE FUNCTIONS
+# ---------------------------
 
 
 def get_available_views():
-    return ["Explorar", "Sobre"]
+    return ["🔍 Explorar", "✨ Sobre"]
 
 
 def get_current_view():
     return get_state("current_view") or get_available_views()[0]
 
 
-############## StatsBombPy DATA FUNCTIONS ##############
+# --------------------------
+# STATSBOMB DATA FUNCTIONS
+# ---------------------------
 
 
 @st.cache_data(ttl=3600)
@@ -216,82 +221,33 @@ def get_match_stats_dict(match_events_df, stats_map=None):
     return stats
 
 
-############## Display Functions ##############
+def generate_match_name(matches_df, match_id):
+    if len(matches_df[matches_df["match_id"] == match_id]) == 0:
+        return "Match not found"
 
-
-def display_match_score(score_obj):
-    col1, col2, col3 = st.columns(get_vs_column_cfg())
-    with col1:
-        st.markdown(
-            f"<h5 style='text-align: center; padding: 0;'>{score_obj['home_team_name']}</h5>",
-            unsafe_allow_html=True,
+    match_id = int(match_id)
+    match_date = matches_df[matches_df["match_id"] == match_id]["match_date"].values[0]
+    match_name = (
+        (
+            matches_df[matches_df["match_id"] == match_id]["home_team"]
+            + " x "
+            + matches_df[matches_df["match_id"] == match_id]["away_team"]
         )
-        if score_obj["home_team_penalty"]:
-            st.markdown(
-                f"<h1 style='text-align: center;'>{score_obj['home_team_open_play']} ({score_obj['home_team_penalty']})</h1>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                f"<h1 style='text-align: center;'>{score_obj['home_team_open_play']}</h1>",
-                unsafe_allow_html=True,
-            )
-        st.markdown(
-            f"<p style='text-align: center; font-size: 12px;'>{score_obj['home_team_player_goals']}</p>",
-            unsafe_allow_html=True,
-        )
-    with col2:
-        st.markdown(
-            f"<h1 style='text-align: center;'>x</h1>",
-            unsafe_allow_html=True,
-        )
-    with col3:
-        st.markdown(
-            f"<h5 style='text-align: center; padding: 0;'>{score_obj['alway_team_name']}</h5>",
-            unsafe_allow_html=True,
-        )
-        if score_obj["alway_team_penalty"]:
-            st.markdown(
-                f"<h1 style='text-align: center;'>{score_obj['alway_team_open_play']} ({score_obj['alway_team_penalty']})</h1>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                f"<h1 style='text-align: center;'>{score_obj['alway_team_open_play']}</h1>",
-                unsafe_allow_html=True,
-            )
-        st.markdown(
-            f"<p style='text-align: center; font-size: 12px;'>{score_obj['alway_team_player_goals']}</p>",
-            unsafe_allow_html=True,
-        )
+        + " - "
+        + match_date
+        + " - "
+        + str(match_id)
+    )
+    return match_name.values[0]
 
 
-def display_overall_match_stats(match_events_df, home_team, alway_team):
-    stats = get_match_stats_dict(match_events_df)
-
-    col1, col2, col3 = st.columns(get_vs_column_cfg())
-    stats_names = list(stats[home_team].keys())
-    with col1:
-        for stat_name in stats_names:
-            st.markdown(
-                f"<p style='text-align: center;'>{stats[home_team][stat_name]}</p>",
-                unsafe_allow_html=True,
-            )
-    with col2:
-        for stat_name in stats_names:
-            st.markdown(
-                f"<p style='text-align: center; font-weight: bold;'>{stat_name}</p>",
-                unsafe_allow_html=True,
-            )
-    with col3:
-        for stat_name in stats_names:
-            st.markdown(
-                f"<p style='text-align: center;'>{stats[alway_team][stat_name]}</p>",
-                unsafe_allow_html=True,
-            )
+def get_vs_column_cfg():
+    return [5, 2, 5]
 
 
-############## StatsBombPy ##############
+# --------------------------
+# STATSBOMB DATA SELECTORS
+# ---------------------------
 
 
 def competitions_selector():
@@ -412,27 +368,86 @@ def explore_view_selector():
     return explore_view
 
 
-def generate_match_name(matches_df, match_id):
-    if len(matches_df[matches_df["match_id"] == match_id]) == 0:
-        return "Match not found"
+# --------------------------
+# DISPLAY FUNCTIONS
+# ---------------------------
 
-    match_id = int(match_id)
-    match_date = matches_df[matches_df["match_id"] == match_id]["match_date"].values[0]
-    match_name = (
-        (
-            matches_df[matches_df["match_id"] == match_id]["home_team"]
-            + " x "
-            + matches_df[matches_df["match_id"] == match_id]["away_team"]
+
+def display_match_score(score_obj):
+    col1, col2, col3 = st.columns(get_vs_column_cfg())
+    with col1:
+        st.markdown(
+            f"<h5 style='text-align: center; padding: 0;'>{score_obj['home_team_name']}</h5>",
+            unsafe_allow_html=True,
         )
-        + " - "
-        + match_date
-        + " - "
-        + str(match_id)
-    )
-    return match_name.values[0]
+        if score_obj["home_team_penalty"]:
+            st.markdown(
+                f"<h1 style='text-align: center;'>{score_obj['home_team_open_play']} ({score_obj['home_team_penalty']})</h1>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f"<h1 style='text-align: center;'>{score_obj['home_team_open_play']}</h1>",
+                unsafe_allow_html=True,
+            )
+        st.markdown(
+            f"<p style='text-align: center; font-size: 12px;'>{score_obj['home_team_player_goals']}</p>",
+            unsafe_allow_html=True,
+        )
+    with col2:
+        st.markdown(
+            f"<h1 style='text-align: center;'>x</h1>",
+            unsafe_allow_html=True,
+        )
+    with col3:
+        st.markdown(
+            f"<h5 style='text-align: center; padding: 0;'>{score_obj['alway_team_name']}</h5>",
+            unsafe_allow_html=True,
+        )
+        if score_obj["alway_team_penalty"]:
+            st.markdown(
+                f"<h1 style='text-align: center;'>{score_obj['alway_team_open_play']} ({score_obj['alway_team_penalty']})</h1>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f"<h1 style='text-align: center;'>{score_obj['alway_team_open_play']}</h1>",
+                unsafe_allow_html=True,
+            )
+        st.markdown(
+            f"<p style='text-align: center; font-size: 12px;'>{score_obj['alway_team_player_goals']}</p>",
+            unsafe_allow_html=True,
+        )
 
 
-############## PLOTS & GRAPHS ##############
+def display_overall_match_stats(match_events_df, home_team, alway_team):
+    stats = get_match_stats_dict(match_events_df)
+
+    col1, col2, col3 = st.columns(get_vs_column_cfg())
+    stats_names = list(stats[home_team].keys())
+    with col1:
+        for stat_name in stats_names:
+            st.markdown(
+                f"<p style='text-align: center;'>{stats[home_team][stat_name]}</p>",
+                unsafe_allow_html=True,
+            )
+    with col2:
+        for stat_name in stats_names:
+            st.markdown(
+                f"<p style='text-align: center; font-weight: bold;'>{stat_name}</p>",
+                unsafe_allow_html=True,
+            )
+    with col3:
+        for stat_name in stats_names:
+            st.markdown(
+                f"<p style='text-align: center;'>{stats[alway_team][stat_name]}</p>",
+                unsafe_allow_html=True,
+            )
+
+
+# --------------------------
+# PLOTS & VISUALIZATIONS
+# ---------------------------
 
 
 @st.cache_data(ttl=3600)
@@ -446,7 +461,7 @@ def plot_event_map(match_events_df, team_name="", event_type="Pass", color="blue
             if team_name:
                 events = events[events["team"] == team_name]
 
-            # Create a soccer pitch
+            # Create the pitch
             pitch = Pitch(
                 pitch_type="statsbomb", pitch_color="grass", line_color="white"
             )
@@ -520,7 +535,7 @@ def plot_events_heatmap(
             # Create a DataFrame of x, y coordinates
             locations_df = pd.DataFrame(locations.tolist(), columns=["x", "y"])
 
-            # Create a soccer pitch
+            # Create the pitch
             pitch = Pitch(
                 pitch_type="statsbomb",
                 line_zorder=2,
@@ -567,6 +582,7 @@ def plot_events_heatmap(
         return True
 
 
+@st.cache_data(ttl=3600)
 def plot_bar_chart_events_by_player(
     match_events_df,
     team_name="",
@@ -607,6 +623,7 @@ def plot_bar_chart_events_by_player(
         return True
 
 
+@st.cache_data(ttl=3600)
 def plot_area_graph_events_by_team(
     match_events_df,
     event_type="Pass",
@@ -639,13 +656,15 @@ def plot_area_graph_events_by_team(
         return True
 
 
-############## PAGES ##############
+# --------------------------
+# PAGES
+# ---------------------------
 
 
-### EXPLORE ###
+### DATA EXPLORE ###
 def view_explore():
     st.title("🔍 Explorar")
-    st.write("Selecione uma opção para visualizar os dados.")
+    st.write("Selecione uma opção para explorar os dados.")
 
     # Show competitions selector
     competition_id, season_id = competitions_selector()
@@ -889,7 +908,9 @@ def view_about():
     )
 
 
-##############  DASHBOARD ##############
+# --------------------------
+# DASHBOARD
+# ---------------------------
 def get_sidebar(view_index=0):
     st.sidebar.title("⚽ Dashboard StatsBombPy")
     st.sidebar.write("Selecione uma visualização para explorar os dados.")
@@ -897,18 +918,17 @@ def get_sidebar(view_index=0):
     set_state("current_view", current_view)
 
 
-def dashboard():
-    ### SIDEBAR ###
+def Dashboard():
+    # Display the sidebar
     get_sidebar()
 
-    ### EXPLORE ###
+    # Display the selected view
     current_view = get_current_view()
-    if current_view == "Explorar":
+    if current_view == "🔍 Explorar":
         view_explore()
-    ### ABOUT ###
-    elif current_view == "Sobre":
+    elif current_view == "✨ Sobre":
         view_about()
 
 
 if __name__ == "__main__":
-    dashboard()
+    Dashboard()
