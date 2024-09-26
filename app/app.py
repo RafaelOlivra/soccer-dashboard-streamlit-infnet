@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.express as px
+import pandas as pd
 import locale
 from statsbombpy import sb
 from mplsoccer import Pitch
@@ -435,14 +436,15 @@ def generate_match_name(matches_df, match_id):
 
 
 @st.cache_data(ttl=3600)
-def plot_event_map(match_events_df, team_name, event_type="Pass", color="blue"):
+def plot_event_map(match_events_df, team_name="", event_type="Pass", color="blue"):
     with st.spinner("Carregando..."):
         try:
-            # Filter for passes by the given team
-            events = match_events_df[
-                (match_events_df["type"] == event_type)
-                & (match_events_df["team"] == team_name)
-            ]
+            # Filter for events by the given team
+            events = match_events_df[(match_events_df["type"] == event_type)]
+
+            # Filter for events by the given team
+            if team_name:
+                events = events[events["team"] == team_name]
 
             # Create a soccer pitch
             pitch = Pitch(
@@ -471,6 +473,61 @@ def plot_event_map(match_events_df, team_name, event_type="Pass", color="blue"):
             st.pyplot(fig)
         except Exception as e:
             st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
+        return True
+
+
+@st.cache_data(ttl=3600)
+def plot_player_heatmap(match_events_df, team_name="", player_name=""):
+    with st.spinner("Carregando..."):
+        try:
+            # Filter for passes by the given team
+            events = match_events_df[(match_events_df["type"] == "Pass")]
+
+            # Filter for events by the given team and player
+            if team_name:
+                events = events[events["team"] == team_name]
+            if player_name:
+                events = events[events["player"] == player_name]
+
+            # Ensure that 'location' column is available and contains coordinates
+            if "location" not in events.columns or events["location"].isnull().all():
+                st.warning("No location data available to plot the heatmap.")
+                return
+
+            # Extract 'x' and 'y' coordinates from 'location' (assuming it's a list of [x, y] coordinates)
+            locations = (
+                events["location"]
+                .dropna()
+                .apply(
+                    lambda loc: loc if isinstance(loc, list) and len(loc) == 2 else None
+                )
+            )
+            locations = pd.DataFrame(locations.tolist(), columns=["x", "y"]).dropna()
+
+            # Create a soccer pitch
+            pitch = Pitch(
+                pitch_type="statsbomb", pitch_color="grass", line_color="white"
+            )
+
+            # Set up the pitch plot
+            fig, ax = pitch.draw(figsize=(10, 7))
+
+            # Plot the heatmap using the x and y coordinates
+            pitch.heatmap(
+                locations[["x", "y"]].values,
+                ax=ax,
+                edgecolors="w",
+                bins=(10, 7),
+                cmap="coolwarm",
+            )
+
+            # Add title and display plot
+            ax.set_title(f"Heatmap for {player_name} ({team_name})", fontsize=16)
+            st.pyplot(fig)
+
+        except Exception as e:
+            st.warning(f"⚠️ Não é possível gerar um gráfico para os dados fornecidos.")
+            st.exception(e)
         return True
 
 
@@ -581,6 +638,11 @@ def view_explore():
                 match_events_df, alway_team, event_type="Shot", color="yellow"
             )
             progress_bar.progress(100, text=f"Finalizado: {title}...")
+
+        # Heatmap
+        st.write(f"---")
+        st.write("##### Heatmap de Passe")
+        plot_player_heatmap(match_events_df)
         progress_bar.empty()
         st.write(f"---")
 
@@ -603,7 +665,7 @@ def view_explore():
         )
 
     ##############################
-    if current_explore_view == "DataFrame":
+    if current_explore_view == "Explorar DataFrame":
 
         # Allow user to filter the displayed data
         st.write(f"---")
