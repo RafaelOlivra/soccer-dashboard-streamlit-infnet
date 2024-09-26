@@ -435,27 +435,27 @@ def display_match_score(score_obj):
 
 def display_overall_match_stats(match_events_df, home_team, alway_team):
     stats = get_match_events_count_dict(match_events_df)
-
-    col1, col2, col3 = st.columns(get_vs_column_cfg())
-    stats_names = list(stats[home_team].keys())
-    with col1:
-        for stat_name in stats_names:
-            st.markdown(
-                f"<p style='text-align: center;'>{stats[home_team][stat_name]}</p>",
-                unsafe_allow_html=True,
-            )
-    with col2:
-        for stat_name in stats_names:
-            st.markdown(
-                f"<p style='text-align: center; font-weight: bold;'>{stat_name}</p>",
-                unsafe_allow_html=True,
-            )
-    with col3:
-        for stat_name in stats_names:
-            st.markdown(
-                f"<p style='text-align: center;'>{stats[alway_team][stat_name]}</p>",
-                unsafe_allow_html=True,
-            )
+    with st.container(border=True):
+        col1, col2, col3 = st.columns(get_vs_column_cfg())
+        stats_names = list(stats[home_team].keys())
+        with col1:
+            for stat_name in stats_names:
+                st.markdown(
+                    f"<p style='text-align: center;'>{stats[home_team][stat_name]}</p>",
+                    unsafe_allow_html=True,
+                )
+        with col2:
+            for stat_name in stats_names:
+                st.markdown(
+                    f"<p style='text-align: center; font-weight: bold;'>{stat_name}</p>",
+                    unsafe_allow_html=True,
+                )
+        with col3:
+            for stat_name in stats_names:
+                st.markdown(
+                    f"<p style='text-align: center;'>{stats[alway_team][stat_name]}</p>",
+                    unsafe_allow_html=True,
+                )
 
 
 # --------------------------
@@ -709,16 +709,15 @@ def view_explore():
         home_team = score_obj["home_team_name"]
         alway_team = score_obj["alway_team_name"]
         display_match_score(score_obj)
-        st.write(f"---")
 
         # Match stats
         display_overall_match_stats(match_events_df, home_team, alway_team)
-        st.write(f"---")
 
         # Save a copy of the unfiltered DataFrame
         original_match_events_df = match_events_df.copy()
 
         #  ---- Filters
+        st.markdown("  ")
         with st.expander("⚙️ Filtrar", expanded=True):
             # Time filter
             time_filter = st.slider(
@@ -753,8 +752,8 @@ def view_explore():
                     ]
 
         #  --- Metrics
+        st.markdown("  ")
         col1, col2, col3, col4 = st.columns(4)
-
         col1.metric(
             "Chutes",
             len(match_events_df[match_events_df["type"] == "Shot"]),
@@ -789,6 +788,7 @@ def view_explore():
                 ],
             ),
         )
+        st.markdown("  ")
 
         # ---- Plots
 
@@ -798,26 +798,26 @@ def view_explore():
         col1, col2 = st.columns(2)
         with col1:
             title = f"Mapa de Passes - {home_team}"
-            st.write(f"##### {title}")
+            st.write(f"###### {title}")
             plot_event_map(match_events_df, home_team, event_type="Pass")
             progress_bar.progress(10, text=f"Finalizado: {title}...")
         with col2:
             title = f"Mapa de Passes - {alway_team}"
-            st.write(f"##### {title}")
+            st.write(f"###### {title}")
             plot_event_map(match_events_df, alway_team, event_type="Pass")
             progress_bar.progress(20, text=f"Finalizado: {title}...")
 
         # Shot map
         with col1:
             title = f"Mapa de Chutes - {home_team}"
-            st.write(f"##### {title}")
+            st.write(f"###### {title}")
             plot_event_map(
                 match_events_df, home_team, event_type="Shot", color="yellow"
             )
             progress_bar.progress(30, text=f"Finalizado: {title}...")
         with col2:
             title = f"Mapa de Chutes - {alway_team}"
-            st.write(f"##### {title}")
+            st.write(f"###### {title}")
             plot_event_map(
                 match_events_df, alway_team, event_type="Shot", color="yellow"
             )
@@ -826,7 +826,7 @@ def view_explore():
         # Heatmap de Posse de Bola
         with col1:
             title = f"Heatmap Posse de Bola - {home_team}"
-            st.write(f"##### {title}")
+            st.write(f"###### {title}")
             plot_events_heatmap(
                 match_events_df, event_type="Carry", team_name=home_team
             )
@@ -834,14 +834,13 @@ def view_explore():
 
         with col2:
             title = f"Heatmap Posse de Bola - {alway_team}"
-            st.write(f"##### {title}")
+            st.write(f"###### {title}")
             plot_events_heatmap(
                 match_events_df, event_type="Carry", team_name=alway_team
             )
             progress_bar.progress(60, text=f"Finalizado: {title}...")
 
         # Shots by player
-        st.write(f"---")
         with col1:
             plot_bar_chart_events_by_player(
                 match_events_df,
@@ -882,10 +881,10 @@ def view_explore():
         # ---- DataFrame
 
         # Display the data in a DataFrame
-        st.write("##### DataFrame da Partida")
+        st.write("###### DataFrame da Partida")
         st.dataframe(match_events_df, use_container_width=True)
 
-        st.write("##### Download dos dados filtrados")
+        st.write("###### Download dos dados filtrados")
         st.write(
             "Clique no botão abaixo para fazer o download do arquivo CSV filtrado com base nas suas seleções."
         )
