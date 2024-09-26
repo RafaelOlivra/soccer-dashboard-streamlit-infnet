@@ -185,7 +185,7 @@ def get_match_events_count_dict(match_events_df, stats_map=None):
             "⚽ Total de Chutes": "Shot",
             "🅿️ Total de Passes": "Pass",
             "❌ Faltas": {"type": "Foul Committed"},
-            "🏳️ Escanteios": {"play_pattern": "From Corner"},
+            "🏳️ Escanteios": {"pass_type": "Corner"},
             "🟨 Cartões Amarelos": {
                 "foul_committed_card": "Yellow Card",
                 "bad_behaviour_card": "Yellow Card",
