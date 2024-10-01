@@ -34,12 +34,16 @@ state = {
 
 # Set session state
 def set_state(key, value):
-    st.session_state[key] = value
+    if key not in st.session_state or get_state(key) != value:
+        st.session_state[key] = value
+        print(f"Set state: {key} -> {value}")
 
 
 # Get session state
 def get_state(key):
-    return st.session_state[key]
+    if key in st.session_state:
+        return st.session_state[key]
+    return None
 
 
 # Set initial state for the current session
@@ -148,6 +152,10 @@ def generate_match_score_dict(competition_id, season_id, match_id):
         "alway_team_penalty": alway_team_penalty_goals,
         "alway_team_player_goals": alway_team_player_goals_text,
     }
+
+
+def get_match_duration(match_events_df):
+    return match_events_df["minute"].max()
 
 
 @st.cache_data(ttl=3600)
@@ -728,7 +736,10 @@ def view_explore():
         with st.expander("⚙️ Filtrar", expanded=True):
             # Time filter
             time_filter = st.slider(
-                "Filtrar por Minuto", min_value=0, max_value=120, value=(0, 120)
+                "Filtrar por Minuto",
+                min_value=0,
+                max_value=get_match_duration(match_events_df),
+                value=(0, get_match_duration(match_events_df)),
             )
             match_events_df = match_events_df[
                 (match_events_df["minute"] >= time_filter[0])
