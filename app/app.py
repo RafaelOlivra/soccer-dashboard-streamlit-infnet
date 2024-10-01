@@ -251,7 +251,25 @@ def get_vs_column_cfg():
     return [5, 2, 5]
 
 
-def get_percentage_comparison_by_event(match_events_df, match_events_df2):
+def get_team_metrics_comparison(match_events_df):
+    # Get total events for each team
+    teams = match_events_df["team"].unique()
+    stats = {}
+
+    for team in teams:
+        team_events = len(match_events_df[match_events_df["team"] == team])
+        stats[team] = f"{team_events or 0}"
+
+    # Return the stats string
+    if len(teams) == 1:
+        return f"{stats[teams[0]]} ({teams[0]})"
+    elif len(teams) == 2:
+        return f"{stats[teams[0]]} ({teams[0]}) x {stats[teams[1]]} ({teams[1]})"
+    else:
+        return "N/A"
+
+
+def get_metrics_percentage_comparison(match_events_df, match_events_df2):
     events = len(match_events_df)
     events2 = len(match_events_df2)
 
@@ -775,35 +793,27 @@ def view_explore():
         col1.metric(
             "Chutes",
             len(match_events_df[match_events_df["type"] == "Shot"]),
-            delta=get_percentage_comparison_by_event(
-                match_events_df[match_events_df["type"] == "Shot"],
-                original_match_events_df[original_match_events_df["type"] == "Shot"],
+            delta=get_team_metrics_comparison(
+                match_events_df[match_events_df["type"] == "Shot"]
             ),
         )
         col2.metric(
             "Chutes ao Gol",
             len(get_shots_on_goal_df(match_events_df)),
-            delta=get_percentage_comparison_by_event(
-                get_shots_on_goal_df(match_events_df),
-                get_shots_on_goal_df(original_match_events_df),
-            ),
+            delta=get_team_metrics_comparison(get_shots_on_goal_df(match_events_df)),
         )
         col3.metric(
             "Passes",
             len(match_events_df[match_events_df["type"] == "Pass"]),
-            delta=get_percentage_comparison_by_event(
-                match_events_df[match_events_df["type"] == "Pass"],
-                original_match_events_df[original_match_events_df["type"] == "Pass"],
+            delta=get_team_metrics_comparison(
+                match_events_df[match_events_df["type"] == "Pass"]
             ),
         )
         col4.metric(
             "Faltas Cometidas",
             len(match_events_df[match_events_df["type"] == "Foul Committed"]),
-            delta=get_percentage_comparison_by_event(
+            delta=get_team_metrics_comparison(
                 match_events_df[match_events_df["type"] == "Foul Committed"],
-                original_match_events_df[
-                    original_match_events_df["type"] == "Foul Committed"
-                ],
             ),
         )
         st.markdown("  ")
