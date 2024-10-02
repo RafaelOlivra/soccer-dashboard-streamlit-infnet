@@ -36,20 +36,15 @@ state = {
 def set_state(key, value):
     if key not in st.session_state or get_state(key) != value:
         st.session_state[key] = value
-        print(f"Set state: {key} -> {value}")
+        # print(f"Set state: {key} -> {value}")
 
 
 # Get session state
 def get_state(key):
     if key in st.session_state:
         return st.session_state[key]
-    return None
-
-
-# Set initial state for the current session
-for key, value in state.items():
-    if key not in st.session_state:
-        set_state(key, value)
+    # Return a default value if the key does not exist
+    return state.get(key, None)
 
 
 # --------------------------
@@ -328,7 +323,7 @@ def competitions_selector():
             competitions["competition_name"] == selected_competition
         ]
         competition_id = competition["competition_id"].values[0]
-        set_state("competition_id", competition_id)
+        set_state("competition_id", int(competition_id))
 
     # Filter by season
     with col3:
@@ -350,7 +345,7 @@ def competitions_selector():
         selected_season = st.selectbox("Selecione uma temporada", seasons, index=idx)
         season = competition[competition["season_name"] == selected_season]
         season_id = season["season_id"].values[0]
-        set_state("season_id", season_id)
+        set_state("season_id", int(season_id))
 
     return competition_id, season_id
 
@@ -391,11 +386,11 @@ def matches_selector(competition_id: int, season_id: int):
 
 def explore_view_selector():
     explore_options = ["Análise da Partida", "Explorar DataFrame"]
-    current_explore_view = get_state("current_explore_view") or explore_options[0]
+    idx = explore_options.index(get_state("current_explore_view") or explore_options[0])
     explore_view = st.selectbox(
         "Opções de Visualização",
         explore_options,
-        index=explore_options.index(current_explore_view),
+        index=idx,
     )
     set_state("current_explore_view", explore_view)
     return explore_view
