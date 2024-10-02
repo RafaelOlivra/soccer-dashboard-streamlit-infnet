@@ -6,7 +6,7 @@ from mplsoccer import Pitch
 
 # --------------------------
 # CONFIGURATIONS
-# ---------------------------
+# --------------------------
 
 # Set page config
 st.set_page_config(
@@ -18,7 +18,7 @@ st.set_page_config(
 
 # --------------------------
 # SESSION STATE FUNCTIONS
-# ---------------------------
+# --------------------------
 
 # Default state
 state = {
@@ -54,7 +54,7 @@ for key, value in state.items():
 
 # --------------------------
 # DASHBOARD STATE FUNCTIONS
-# ---------------------------
+# --------------------------
 
 
 def get_available_views():
@@ -67,7 +67,7 @@ def get_current_view():
 
 # --------------------------
 # STATSBOMB DATA FUNCTIONS
-# ---------------------------
+# --------------------------
 
 
 @st.cache_data(ttl=3600)
@@ -196,11 +196,11 @@ def get_match_events_count_dict(match_events_df, stats_map=None):
             "🏳️ Escanteios": {"pass_type": "Corner"},
             "🟨 Cartões Amarelos": {
                 "foul_committed_card": "Yellow Card",
-                "bad_behaviour_card": "Yellow Card",
+                "bad_behavior_card": "Yellow Card",
             },
             "🟥 Cartões Vermelhos": {
                 "foul_committed_card": "Red Card",
-                "bad_behaviour_card": "Red Card",
+                "bad_behavior_card": "Red Card",
             },
         }
 
@@ -280,7 +280,7 @@ def get_metrics_percentage_comparison(match_events_df, match_events_df2):
 
 # --------------------------
 # STATSBOMB DATA SELECTORS
-# ---------------------------
+# --------------------------
 
 
 def competitions_selector():
@@ -403,7 +403,7 @@ def explore_view_selector():
 
 # --------------------------
 # DISPLAY FUNCTIONS
-# ---------------------------
+# --------------------------
 
 
 def display_match_score(score_obj):
@@ -480,7 +480,7 @@ def display_overall_match_stats(match_events_df, home_team, alway_team):
 
 # --------------------------
 # PLOTS & VISUALIZATIONS
-# ---------------------------
+# --------------------------
 
 
 @st.cache_data(ttl=3600)
@@ -716,7 +716,7 @@ def plot_area_graph_events_by_team(
 
 # --------------------------
 # PAGES
-# ---------------------------
+# --------------------------
 
 
 ### DATA EXPLORE ###
@@ -1024,7 +1024,7 @@ def view_about():
 
 # --------------------------
 # DASHBOARD
-# ---------------------------
+# --------------------------
 def get_sidebar(view_index=0):
     st.sidebar.title("⚽ Dashboard StatsBombPy")
     st.sidebar.write("Selecione uma visualização para explorar os dados.")
